@@ -1,22 +1,38 @@
-// import { Button } from "./components/ui/button";
-// import useStore from "./zustand/store";
+import { useEffect } from "react";
+import { io } from "socket.io-client";
+import { Button } from "./components/ui/button";
 
-// type bearCouter = {
-//   bears: number;
-// };
+const socket = io("http://localhost:3000");
 
 function App() {
-  // const bears = useStore((state: bearCouter) => state.bears);
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("✅ Connected:", socket.id);
+    });
 
-  // const increasePopulation = useStore((state) => state.increasePopulation);
-  // const reset = useStore((state) => state.removeAllBears);
+    socket.on("message", (data) => {
+      console.log("📨 Message from server:", data);
+    });
+
+    const handleBeforeUnload = () => {
+      socket.disconnect();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  const sendMessage = () => {
+    socket.emit("message", "Hello from frontend");
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
       <h1 className="text-3xl">Hello</h1>
-      {/* <p>Bears: {bears}</p>
-      <Button onClick={increasePopulation}>more bears</Button>
-      <Button onClick={reset}>reset bears</Button> */}
+      <Button onClick={sendMessage}>test socket</Button>
     </div>
   );
 }
