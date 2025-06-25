@@ -5,6 +5,7 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/web-card-game/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
