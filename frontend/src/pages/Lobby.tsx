@@ -1,38 +1,49 @@
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
-import { io } from "socket.io-client";
-
-const socket = io("http://localhost:3000");
+import { useSocket } from "@/hooks/useSocket";
+import { useState } from "react";
 
 export default function Lobby() {
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("✅ Connected:", socket.id);
-    });
+  const [name, setName] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const { socket, connect, connected } = useSocket("http://localhost:3000");
 
-    socket.on("message", (data) => {
-      console.log("📨 Message from server:", data);
-    });
+  const enterTheGame = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-    const handleBeforeUnload = () => {
-      socket.disconnect();
+    connect();
+
+    const tryEmit = () => {
+      if (socket?.connected) {
+        socket.emit("join_room", { name, roomId: roomName });
+      } else {
+        setTimeout(tryEmit, 500);
+      }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
-
-  const sendMessage = () => {
-    socket.emit("message", "Hello from frontend");
+    tryEmit();
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
+    <div className="min-h-screen flex items-center justify-center">
       <h1 className="text-3xl">Lobby</h1>
-      <Button onClick={sendMessage}>test socket</Button>
+      <form onSubmit={enterTheGame}>
+        <input
+          className="block text-black px-2 py-1 rounded"
+          type="text"
+          placeholder="Your name"
+          onChange={(e) => setName(e.currentTarget.value)}
+          value={name}
+        />
+        <input
+          className="block text-black px-2 py-1 rounded"
+          type="text"
+          placeholder="Room name"
+          onChange={(e) => setRoomName(e.currentTarget.value)}
+          value={roomName}
+        />
+        <Button>Enter the game</Button>
+        {connected && <p className="text-green-400 text-sm">Connected ✅</p>}
+      </form>
     </div>
   );
 }
